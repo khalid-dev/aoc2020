@@ -28,11 +28,12 @@ fn parse_rules(rule_str: &str, value_re: &Regex, adjacencies_re: &Regex) -> (Str
     return (value, adjacencies);
 }
 
-fn count_paths(adjacency_table: HashMap<String, Vec<String>>, destination: &str) -> u32 {
+// BFS from node, increment count for every node not yet visited
+fn count_paths(adjacency_table: HashMap<String, Vec<String>>, source: &str) -> u32 {
     let mut visited: HashSet<&str> = HashSet::new();
     let mut paths_count: u32 = 0;
 
-    let mut node_queue: Queue<&str> = queue![destination];
+    let mut node_queue: Queue<&str> = queue![source];
     while node_queue.size() > 0 {
         let node = node_queue.remove().unwrap();
         if !visited.contains(node) {
@@ -52,9 +53,11 @@ fn count_paths(adjacency_table: HashMap<String, Vec<String>>, destination: &str)
         }
     }
 
+    // subtract 1 to ignore the queue starting w/ source in it
     return paths_count - 1;
 }
 
+// BFS from node (parent_bag), for each child we encounter, increment & enqueue appropriately
 fn count_bags(adjacency_count_table: HashMap<String, Vec<(String, u32)>>, parent_bag: &str) -> u32 {
     let mut bags_count: u32 = 0;
 
@@ -93,8 +96,8 @@ fn main() {
         .split("\n")
         .collect();
 
-    let mut reversed_rule_adjacency_table: HashMap<String, Vec<String>> = HashMap::new();
-    let mut rule_count_adjacency_table: HashMap<String, Vec<(String, u32)>> = HashMap::new();
+    let mut contained_in_adjacency_table: HashMap<String, Vec<String>> = HashMap::new();
+    let mut contains_count_adjacency_table: HashMap<String, Vec<(String, u32)>> = HashMap::new();
     let value_re = Regex::new(r"^(\w+\s\w+)").unwrap();
     let adjacencies_re = Regex::new(r"(?:\d\s(?P<rule>\w+\s\w+)*)").unwrap();
 
@@ -105,21 +108,21 @@ fn main() {
             let count = adjacency.chars().nth(0).unwrap().to_digit(10).unwrap();
             let stripped_adjacency = String::from(adjacency).split_off(2);
             // part 1
-            match reversed_rule_adjacency_table.get_mut(&stripped_adjacency) {
+            match contained_in_adjacency_table.get_mut(&stripped_adjacency) {
                 Some(v) => { v.push(value.to_string()); },
-                None => { reversed_rule_adjacency_table.insert(stripped_adjacency.to_string(), vec![value.to_string()]); }
+                None => { contained_in_adjacency_table.insert(stripped_adjacency.to_string(), vec![value.to_string()]); }
             }
             // part 2
-            match rule_count_adjacency_table.get_mut(&value) {
+            match contains_count_adjacency_table.get_mut(&value) {
                 Some(v) => { v.push((stripped_adjacency, count)); },
-                None => { rule_count_adjacency_table.insert(value.to_string(), vec![(stripped_adjacency, count)]); },
+                None => { contains_count_adjacency_table.insert(value.to_string(), vec![(stripped_adjacency, count)]); },
             }
         }
     }
 
-    let paths_to_shiny_gold = count_paths(reversed_rule_adjacency_table, "shiny gold");
+    let paths_to_shiny_gold = count_paths(contained_in_adjacency_table, "shiny gold");
     println!("paths to shiny gold: {}", paths_to_shiny_gold);
 
-    let bags_in_shiny_gold = count_bags(rule_count_adjacency_table, "shiny gold");
+    let bags_in_shiny_gold = count_bags(contains_count_adjacency_table, "shiny gold");
     println!("bags_in_shiny_gold: {}", bags_in_shiny_gold);
 }
