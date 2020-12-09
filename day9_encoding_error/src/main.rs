@@ -22,10 +22,12 @@ fn main() {
         let num = line.unwrap().parse::<i64>().unwrap();
 
         match insert_order.size() {
+            // insert the first 25 entries to map & queue
             0..=24 => {
                 preamble_pairs.insert(num, true);
                 insert_order.add(num);
             },
+            // check if entry is valid, pop oldest from queue and map, insert newest
             25 => {
                 let mut num_passed_validation = false;
                 for (key, _) in preamble_pairs.iter() {
@@ -69,6 +71,7 @@ fn main() {
     let mut right_bound: usize = 1;
     let mut sum: i64 = nums[0] + nums[1];
 
+    // find contiguous entries that sum to invalid num from Part 1
     'find_window: while right_bound < nums.len() - 1 {
         // if we encounter a number that would invalidate the entire window, skip window past it
         if nums[left_bound] > invalid_num || nums[right_bound] > invalid_num {
